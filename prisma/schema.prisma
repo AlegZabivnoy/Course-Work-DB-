@@ -11,3 +11,174 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum PartType {
+  screen
+  battery
+  camera
+  back_cover
+  charging_port
+  speaker
+  other
+
+  @@map("part_type")
+}
+
+enum RepairStatus {
+  received
+  diagnosing
+  in_repair
+  ready
+  issued
+  cancelled
+
+  @@map("repair_status")
+}
+
+enum ShopOrderStatus {
+  new
+  paid
+  shipped
+  cancelled
+
+  @@map("shop_order_status")
+}
+
+model Brand {
+  id     Int           @id @default(autoincrement())
+  name   String        @unique @db.VarChar(50)
+  models DeviceModel[]
+
+  @@map("brands")
+}
+
+model DeviceModel {
+  id              Int                 @id @default(autoincrement())
+  brandId         Int                 @map("brand_id")
+  name            String              @db.VarChar(100)
+  releaseYear     Int?                @map("release_year") @db.SmallInt
+  brand           Brand               @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  devices         Device[]
+  compatibleParts PartCompatibility[]
+
+  @@unique([brandId, name])
+  @@map("device_models")
+}
+
+model Technician {
+  id           Int           @id @default(autoincrement())
+  fullName     String        @map("full_name") @db.VarChar(150)
+  isActive     Boolean       @default(true) @map("is_active")
+  hiredAt      DateTime      @default(now()) @map("hired_at") @db.Date
+  repairOrders RepairOrder[]
+
+  @@map("technicians")
+}
+
+model Customer {
+  id         Int         @id @default(autoincrement())
+  fullName   String      @map("full_name") @db.VarChar(150)
+  phone      String      @unique @db.VarChar(20)
+  email      String?     @unique @db.VarChar(255)
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt  DateTime?   @map("deleted_at") @db.Timestamptz
+  devices    Device[]
+  shopOrders ShopOrder[]
+
+  @@map("customers")
+}
+
+model Device {
+  id           Int           @id @default(autoincrement())
+  customerId   Int           @map("customer_id")
+  modelId      Int           @map("model_id")
+  serialNumber String        @unique @map("serial_number") @db.VarChar(50)
+  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  model        DeviceModel   @relation(fields: [modelId], references: [id], onDelete: Restrict)
+  repairOrders RepairOrder[]
+
+  @@index([customerId])
+  @@map("devices")
+}
+
+model Part {
+  id               Int                 @id @default(autoincrement())
+  sku              String              @unique @db.VarChar(50)
+  name             String              @db.VarChar(200)
+  partType         PartType            @map("part_type")
+  price            Decimal             @db.Decimal(10, 2)
+  stockQty         Int                 @default(0) @map("stock_qty")
+  version          Int                 @default(0)
+  deletedAt        DateTime?           @map("deleted_at") @db.Timestamptz
+  compatibleModels PartCompatibility[]
+  repairOrderParts RepairOrderPart[]
+  shopOrderItems   ShopOrderItem[]
+
+  @@index([partType])
+  @@map("parts")
+}
+
+model PartCompatibility {
+  partId  Int         @map("part_id")
+  modelId Int         @map("model_id")
+  part    Part        @relation(fields: [partId], references: [id], onDelete: Cascade)
+  model   DeviceModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@id([partId, modelId])
+  @@map("part_compatibility")
+}
+
+model RepairOrder {
+  id                 Int               @id @default(autoincrement())
+  deviceId           Int               @map("device_id")
+  technicianId       Int?              @map("technician_id")
+  status             RepairStatus      @default(received)
+  problemDescription String            @map("problem_description") @db.Text
+  laborCost          Decimal           @default(0) @map("labor_cost") @db.Decimal(10, 2)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  completedAt        DateTime?         @map("completed_at") @db.Timestamptz
+  version            Int               @default(0)
+  device             Device            @relation(fields: [deviceId], references: [id], onDelete: Restrict)
+  technician         Technician?       @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  parts              RepairOrderPart[]
+
+  @@index([status, createdAt])
+  @@index([deviceId])
+  @@map("repair_orders")
+}
+
+model RepairOrderPart {
+  orderId   Int         @map("order_id")
+  partId    Int         @map("part_id")
+  quantity  Int
+  unitPrice Decimal     @map("unit_price") @db.Decimal(10, 2)
+  order     RepairOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  part      Part        @relation(fields: [partId], references: [id], onDelete: Restrict)
+
+  @@id([orderId, partId])
+  @@map("repair_order_parts")
+}
+
+model ShopOrder {
+  id         Int             @id @default(autoincrement())
+  customerId Int             @map("customer_id")
+  status     ShopOrderStatus @default(new)
+  createdAt  DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  customer   Customer        @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items      ShopOrderItem[]
+
+  @@index([customerId, createdAt])
+  @@map("shop_orders")
+}
+
+model ShopOrderItem {
+  orderId   Int       @map("order_id")
+  partId    Int       @map("part_id")
+  quantity  Int
+  unitPrice Decimal   @map("unit_price") @db.Decimal(10, 2)
+  order     ShopOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  part      Part      @relation(fields: [partId], references: [id], onDelete: Restrict)
+
+  @@id([orderId, partId])
+  @@map("shop_order_items")
+}
