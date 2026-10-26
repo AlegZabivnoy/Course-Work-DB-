@@ -1,0 +1,49 @@
+### 1. Успішний прийом (новий клієнт і пристрій) → 201
+POST http://localhost:3000/repairs
+Content-Type: application/json
+
+{
+  "customer": { "fullName": "Іван Петренко", "phone": "+38 (050) 111-22-33" },
+  "device": { "modelId": 5, "serialNumber": "f2lxk9abc" },
+  "problemDescription": "Розбитий екран"
+}
+
+### 2. Той самий телефон повторно → 201 (новий ремонт, клієнт і пристрій вже існують)
+POST http://localhost:3000/repairs
+Content-Type: application/json
+
+{
+  "customer": { "fullName": "Іван Петренко", "phone": "+380501112233" },
+  "device": { "modelId": 5, "serialNumber": "F2LXK9ABC" },
+  "problemDescription": "Не заряджається"
+}
+
+### 3. Невалідні дані → 400
+POST http://localhost:3000/repairs
+Content-Type: application/json
+
+{
+  "customer": { "fullName": "І", "phone": "abc" },
+  "device": { "modelId": 5, "serialNumber": "123" },
+  "problemDescription": "?"
+}
+
+### 4. Неіснуюча модель → 404
+POST http://localhost:3000/repairs
+Content-Type: application/json
+
+{
+  "customer": { "fullName": "Олена Коваль", "phone": "+380671234567" },
+  "device": { "modelId": 999, "serialNumber": "R58N12345" },
+  "problemDescription": "Не вмикається"
+}
+
+### 5. Чужий телефон → 409 + ROLLBACK (Олена не повинна створитися)
+POST http://localhost:3000/repairs
+Content-Type: application/json
+
+{
+  "customer": { "fullName": "Олена Коваль", "phone": "+380671234567" },
+  "device": { "modelId": 5, "serialNumber": "F2LXK9ABC" },
+  "problemDescription": "Тріснуте скло"
+}
