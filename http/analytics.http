@@ -1,0 +1,7 @@
+@baseUrl = http://localhost:3000
+
+### Top 3 parts by revenue in each category
+GET {{baseUrl}}/analytics/top-parts
+
+### Monthly sales and change from previous month
+GET {{baseUrl}}/analytics/monthly-sales
