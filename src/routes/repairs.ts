@@ -1,8 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { Prisma } from "../../generated/prisma/client";
 import { acceptRepair } from "../services/repair.service";
-import { AppError } from "../errors";
 
 const phoneSchema = z
     .string()
@@ -24,35 +22,8 @@ const acceptRepairSchema = z.object({
 
 export async function repairRoutes(app: FastifyInstance) {
     app.post("/repairs", async (request, reply) => {
-        const parsed = acceptRepairSchema.safeParse(request.body);
-
-        if (!parsed.success) {
-            return reply.code(400).send({
-                error: "ValidationError",
-                details: parsed.error.issues.map((issue) => ({
-                    field: issue.path.join("."),
-                    message: issue.message,
-                })),
-            });
-        }
-
-        try {
-            const repair = await acceptRepair(parsed.data);
-            return reply.code(201).send(repair);
-        } catch (error) {
-            if (error instanceof AppError) {
-                return reply.code(error.statusCode).send({
-                    error: error.name,
-                    message: error.message,
-                });
-            }
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-                return reply.code(409).send({
-                    error: "Conflict",
-                    message: "Record with the same unique value already exists",
-                });
-            }
-            throw error;
-        }
+        const parsed = acceptRepairSchema.parse(request.body);
+        const repair = await acceptRepair(parsed);
+        return reply.code(201).send(repair);
     });
 }
