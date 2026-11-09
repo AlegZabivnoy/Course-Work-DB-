@@ -51,10 +51,12 @@ const technicians = [
 ];
 
 const parts = [
-    { sku: "APL-IP13-SCR", name: "iPhone 13 OLED display", partType: "screen" as const, price: "89.99", stockQty: 8, brand: "Apple", models: ["iPhone 13", "iPhone 13 Pro"] },
+    { sku: "APL-IP12-SCR", name: "iPhone 12 / 12 Pro OLED display", partType: "screen" as const, price: "79.00", stockQty: 7, brand: "Apple", models: ["iPhone 12", "iPhone 12 Pro"] },
+    { sku: "APL-IP12-BAT", name: "iPhone 12 / 12 Pro battery", partType: "battery" as const, price: "25.00", stockQty: 14, brand: "Apple", models: ["iPhone 12", "iPhone 12 Pro"] },
+    { sku: "APL-IP13-SCR", name: "iPhone 13 OLED display", partType: "screen" as const, price: "89.99", stockQty: 8, brand: "Apple", models: ["iPhone 13"] },
     { sku: "APL-IP13-BAT", name: "iPhone 13 battery", partType: "battery" as const, price: "29.50", stockQty: 15, brand: "Apple", models: ["iPhone 13"] },
-    { sku: "APL-IP14-SCR", name: "iPhone 14 display", partType: "screen" as const, price: "109.00", stockQty: 6, brand: "Apple", models: ["iPhone 14", "iPhone 14 Pro"] },
-    { sku: "SAM-S23-SCR", name: "Galaxy S23 display assembly", partType: "screen" as const, price: "119.00", stockQty: 5, brand: "Samsung", models: ["Galaxy S23", "Galaxy S23 Ultra"] },
+    { sku: "APL-IP14-SCR", name: "iPhone 14 display", partType: "screen" as const, price: "109.00", stockQty: 6, brand: "Apple", models: ["iPhone 14"] },
+    { sku: "SAM-S23-SCR", name: "Galaxy S23 display assembly", partType: "screen" as const, price: "119.00", stockQty: 5, brand: "Samsung", models: ["Galaxy S23"] },
     { sku: "SAM-S23-BAT", name: "Galaxy S23 battery", partType: "battery" as const, price: "34.00", stockQty: 12, brand: "Samsung", models: ["Galaxy S23"] },
     { sku: "SAM-A54-CHG", name: "Galaxy A54 charging port", partType: "charging_port" as const, price: "22.00", stockQty: 10, brand: "Samsung", models: ["Galaxy A54"] },
 ];
