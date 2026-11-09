@@ -100,6 +100,22 @@ npm run dev
 | `docker compose down` | Зупинка бази (дані зберігаються) |
 | `docker compose down -v` | Зупинка з видаленням даних у Docker volumes |
 
+## API магазину запчастин
+
+API доступне за адресою `http://localhost:3000`. Перед створенням замовлення створіть або використайте активного клієнта через `POST /repairs`.
+
+| Ендпоінт | Призначення | Приклад |
+|---|---|---|
+| `POST /shop-orders` | Атомарно створює замовлення, позиції та списує склад із фіксацією ціни | [`http/shop-orders.http`](http/shop-orders.http) |
+| `PATCH /parts/:id` | Змінює ціну або залишок із перевіркою поточного `version` | [`http/parts.http`](http/parts.http) |
+| `DELETE /customers/:id` | М'яко видаляє клієнта | [`http/customers.http`](http/customers.http) |
+| `GET /parts` | Показує сумісні запчастини з фільтром, сортуванням і пагінацією | [`http/parts.http`](http/parts.http) |
+| `GET /parts/search?q=` | Шукає назву запчастини через PostgreSQL `ILIKE` | [`http/parts.http`](http/parts.http) |
+| `GET /analytics/top-parts` | Топ-3 запчастини за виручкою в кожній категорії | [`http/analytics.http`](http/analytics.http) |
+| `GET /analytics/monthly-sales` | Продажі за місяцями та зміна до попереднього місяця | [`http/analytics.http`](http/analytics.http) |
+
+Запустіть `npm run db:seed`, щоб додати приклади запчастин і сумісності з моделями. Повторний запуск не змінює залишки вже наявних запчастин.
+
 ## Структура проєкту
 
 ```text
