@@ -1,0 +1,17 @@
+@baseUrl = http://localhost:3000
+
+### Browse parts compatible with model 5 (iPhone 13)
+GET {{baseUrl}}/parts?modelId=5&type=screen&sort=asc&page=1
+
+### Search (ILIKE)
+GET {{baseUrl}}/parts/search?q=display&page=1
+
+### Update price or inventory; send the current version
+PATCH {{baseUrl}}/parts/1
+Content-Type: application/json
+
+{
+  "version": 0,
+  "price": 95.50,
+  "stockQty": 10
+}
