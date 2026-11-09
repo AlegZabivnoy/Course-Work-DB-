@@ -50,6 +50,15 @@ const technicians = [
     { fullName: "Максим Ткаченко", hiredAt: new Date("2024-02-10") },
 ];
 
+const parts = [
+    { sku: "APL-IP13-SCR", name: "iPhone 13 OLED display", partType: "screen" as const, price: "89.99", stockQty: 8, brand: "Apple", models: ["iPhone 13", "iPhone 13 Pro"] },
+    { sku: "APL-IP13-BAT", name: "iPhone 13 battery", partType: "battery" as const, price: "29.50", stockQty: 15, brand: "Apple", models: ["iPhone 13"] },
+    { sku: "APL-IP14-SCR", name: "iPhone 14 display", partType: "screen" as const, price: "109.00", stockQty: 6, brand: "Apple", models: ["iPhone 14", "iPhone 14 Pro"] },
+    { sku: "SAM-S23-SCR", name: "Galaxy S23 display assembly", partType: "screen" as const, price: "119.00", stockQty: 5, brand: "Samsung", models: ["Galaxy S23", "Galaxy S23 Ultra"] },
+    { sku: "SAM-S23-BAT", name: "Galaxy S23 battery", partType: "battery" as const, price: "34.00", stockQty: 12, brand: "Samsung", models: ["Galaxy S23"] },
+    { sku: "SAM-A54-CHG", name: "Galaxy A54 charging port", partType: "charging_port" as const, price: "22.00", stockQty: 10, brand: "Samsung", models: ["Galaxy A54"] },
+];
+
 async function seedBrandsAndModels() {
     for (const entry of catalog) {
         const brand = await prisma.brand.upsert({
@@ -86,9 +95,30 @@ async function seedTechnicians() {
     console.log(`✓ Technicians: ${technicians.length} created`);
 }
 
+async function seedParts() {
+    for (const entry of parts) {
+        const part = await prisma.part.upsert({
+            where: { sku: entry.sku },
+            update: { name: entry.name, partType: entry.partType },
+            create: { sku: entry.sku, name: entry.name, partType: entry.partType, price: entry.price, stockQty: entry.stockQty },
+        });
+        const brand = await prisma.brand.findUniqueOrThrow({ where: { name: entry.brand } });
+        for (const modelName of entry.models) {
+            const model = await prisma.deviceModel.findUniqueOrThrow({ where: { brandId_name: { brandId: brand.id, name: modelName } } });
+            await prisma.partCompatibility.upsert({
+                where: { partId_modelId: { partId: part.id, modelId: model.id } },
+                update: {},
+                create: { partId: part.id, modelId: model.id },
+            });
+        }
+    }
+    console.log(`Parts and compatibility: ${parts.length} seeded`);
+}
+
 async function main() {
     await seedBrandsAndModels();
     await seedTechnicians();
+    await seedParts();
 }
 
 main()
