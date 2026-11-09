@@ -1,0 +1,22 @@
+@baseUrl = http://localhost:3000
+
+### Create order (replace customerId with an existing, active customer)
+POST {{baseUrl}}/shop-orders
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "items": [
+    { "partId": 1, "quantity": 1 },
+    { "partId": 2, "quantity": 2 }
+  ]
+}
+
+### Insufficient stock returns 409 and rolls the whole order back
+POST {{baseUrl}}/shop-orders
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "items": [{ "partId": 1, "quantity": 9999 }]
+}
