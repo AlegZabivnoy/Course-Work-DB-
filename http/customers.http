@@ -1,0 +1,4 @@
+@baseUrl = http://localhost:3000
+
+### Soft-delete customer (replace with an active customer id)
+DELETE {{baseUrl}}/customers/1
