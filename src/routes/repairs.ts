@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { acceptRepair } from "../services/repair.service";
+import { acceptRepair, addPartToRepair } from "../services/repair.service";
 
 const phoneSchema = z
     .string()
@@ -20,10 +20,25 @@ const acceptRepairSchema = z.object({
     problemDescription: z.string().trim().min(5).max(2000),
 });
 
+const repairIdSchema = z.object({
+    id: z.coerce.number().int().positive(),
+});
+
+const addPartSchema = z.object({
+    partId: z.number().int().positive(),
+    quantity: z.number().int().positive().max(10),
+});
+
 export async function repairRoutes(app: FastifyInstance) {
     app.post("/repairs", async (request, reply) => {
         const parsed = acceptRepairSchema.parse(request.body);
         const repair = await acceptRepair(parsed);
         return reply.code(201).send(repair);
+    });
+
+    app.post("/repairs/:id/parts", async (request) => {
+        const { id } = repairIdSchema.parse(request.params);
+        const body = addPartSchema.parse(request.body);
+        return addPartToRepair(id, body);
     });
 }

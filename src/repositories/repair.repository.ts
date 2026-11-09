@@ -10,6 +10,7 @@ export const repairOrderInclude = {
         },
     },
     technician: true,
+    parts: { include: { part: true } },
 } satisfies Prisma.RepairOrderInclude;
 
 export function findDeviceModelById(db: Db, id: number) {
@@ -43,4 +44,60 @@ export function createRepairOrder(
     data: { deviceId: number; problemDescription: string },
 ) {
     return db.repairOrder.create({ data, include: repairOrderInclude });
+}
+
+export async function lockRepairOrder(db: Db, id: number) {
+    const rows = await db.$queryRaw<{ id: number; status: string; device_id: number }[]>`
+        SELECT id, status::text AS status, device_id
+        FROM repair_orders
+        WHERE id = ${id}
+        FOR UPDATE`;
+    return rows[0] ?? null;
+}
+
+export async function lockPart(db: Db, id: number) {
+    const rows = await db.$queryRaw<
+        { id: number; stock_qty: number; price: Prisma.Decimal; deleted_at: Date | null }[]
+    >`
+        SELECT id, stock_qty, price, deleted_at
+        FROM parts
+        WHERE id = ${id}
+        FOR UPDATE`;
+    return rows[0] ?? null;
+}
+
+export async function isPartCompatibleWithDevice(db: Db, partId: number, deviceId: number) {
+    const device = await db.device.findUniqueOrThrow({
+        where: { id: deviceId },
+        select: { modelId: true },
+    });
+    const link = await db.partCompatibility.findUnique({
+        where: { partId_modelId: { partId, modelId: device.modelId } },
+    });
+    return link !== null;
+}
+
+export function decrementPartStock(db: Db, partId: number, quantity: number) {
+    return db.part.update({
+        where: { id: partId },
+        data: {
+            stockQty: { decrement: quantity },
+            version: { increment: 1 },
+        },
+    });
+}
+
+export function addPartToRepairOrder(
+    db: Db,
+    data: { orderId: number; partId: number; quantity: number; unitPrice: Prisma.Decimal },
+) {
+    return db.repairOrderPart.upsert({
+        where: { orderId_partId: { orderId: data.orderId, partId: data.partId } },
+        update: { quantity: { increment: data.quantity } },
+        create: data,
+    });
+}
+
+export function findRepairOrderById(db: Db, id: number) {
+    return db.repairOrder.findUnique({ where: { id }, include: repairOrderInclude });
 }

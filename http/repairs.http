@@ -47,3 +47,33 @@ Content-Type: application/json
   "device": { "modelId": 5, "serialNumber": "F2LXK9ABC" },
   "problemDescription": "Тріснуте скло"
 }
+
+### 6. Додати екран iPhone 13 у ремонт 1 → 200
+POST http://localhost:3000/repairs/1/parts
+Content-Type: application/json
+
+{ "partId": 3, "quantity": 1 }
+
+### 7. Та сама запчастина ще раз → 200 (quantity стає 2)
+POST http://localhost:3000/repairs/1/parts
+Content-Type: application/json
+
+{ "partId": 3, "quantity": 1 }
+
+### 8. Несумісна запчастина (екран Galaxy S23) → 409
+POST http://localhost:3000/repairs/1/parts
+Content-Type: application/json
+
+{ "partId": 6, "quantity": 1 }
+
+### 9. Більше, ніж є на складі → 409
+POST http://localhost:3000/repairs/1/parts
+Content-Type: application/json
+
+{ "partId": 3, "quantity": 10 }
+
+### 10. Неіснуючий ремонт → 404
+POST http://localhost:3000/repairs/999/parts
+Content-Type: application/json
+
+{ "partId": 3, "quantity": 1 }
