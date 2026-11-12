@@ -77,3 +77,57 @@ POST http://localhost:3000/repairs/999/parts
 Content-Type: application/json
 
 { "partId": 3, "quantity": 1 }
+
+### 11. Недопустимий перехід received → ready → 409
+PATCH http://localhost:3000/repairs/1/status
+Content-Type: application/json
+
+{ "status": "ready", "version": 0 }
+
+### 12. Діагностика без майстра → 409
+PATCH http://localhost:3000/repairs/1/status
+Content-Type: application/json
+
+{ "status": "diagnosing", "version": 0 }
+
+### 13. Діагностика з майстром → 200 (version стає 1)
+PATCH http://localhost:3000/repairs/1/status
+Content-Type: application/json
+
+{ "status": "diagnosing", "version": 0, "technicianId": 1 }
+
+### 14. Застаріла версія (оптимістичне блокування) → 409
+PATCH http://localhost:3000/repairs/1/status
+Content-Type: application/json
+
+{ "status": "in_repair", "version": 0 }
+
+### 15. В роботу з актуальною версією → 200 (version стає 2)
+PATCH http://localhost:3000/repairs/1/status
+Content-Type: application/json
+
+{ "status": "in_repair", "version": 1 }
+
+### 16. Готово + вартість роботи → 200 (completedAt заповнюється)
+PATCH http://localhost:3000/repairs/1/status
+Content-Type: application/json
+
+{ "status": "ready", "version": 2, "laborCost": 500 }
+
+### 17. Видача клієнту → 200
+PATCH http://localhost:3000/repairs/1/status
+Content-Type: application/json
+
+{ "status": "issued", "version": 3 }
+
+### 18. Додати запчастину в ремонт 2 (перед скасуванням) → 200
+POST http://localhost:3000/repairs/2/parts
+Content-Type: application/json
+
+{ "partId": 3, "quantity": 1 }
+
+### 19. Скасування ремонту 2 → 200, запчастина повертається на склад
+PATCH http://localhost:3000/repairs/2/status
+Content-Type: application/json
+
+{ "status": "cancelled", "version": 0 }

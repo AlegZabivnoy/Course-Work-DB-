@@ -1,4 +1,4 @@
-import type { Prisma } from "../../generated/prisma/client";
+import type { Prisma, RepairStatus } from "../../generated/prisma/client";
 
 type Db = Prisma.TransactionClient;
 
@@ -100,4 +100,41 @@ export function addPartToRepairOrder(
 
 export function findRepairOrderById(db: Db, id: number) {
     return db.repairOrder.findUnique({ where: { id }, include: repairOrderInclude });
+}
+
+export function findRepairOrderState(db: Db, id: number) {
+    return db.repairOrder.findUnique({
+        where: { id },
+        select: { id: true, status: true, version: true, technicianId: true },
+    });
+}
+
+export function findActiveTechnician(db: Db, id: number) {
+    return db.technician.findFirst({ where: { id, isActive: true } });
+}
+
+export function updateRepairOrderStatus(
+    db: Db,
+    id: number,
+    expected: { version: number; status: RepairStatus },
+    data: Prisma.RepairOrderUncheckedUpdateManyInput,
+) {
+    return db.repairOrder.updateMany({
+        where: { id, version: expected.version, status: expected.status },
+        data: { ...data, version: { increment: 1 } },
+    });
+}
+
+export function findRepairOrderParts(db: Db, orderId: number) {
+    return db.repairOrderPart.findMany({ where: { orderId } });
+}
+
+export function returnPartToStock(db: Db, partId: number, quantity: number) {
+    return db.part.update({
+        where: { id: partId },
+        data: {
+            stockQty: { increment: quantity },
+            version: { increment: 1 },
+        },
+    });
 }

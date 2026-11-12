@@ -1,6 +1,7 @@
 import { prisma } from "../db/prisma";
 import * as repairRepository from "../repositories/repair.repository";
 import { ConflictError, NotFoundError } from "../errors";
+import type { Prisma, RepairStatus } from "../../generated/prisma/client";
 
 export interface AcceptRepairInput {
     customer: { fullName: string; phone: string; email?: string };
@@ -88,6 +89,81 @@ export async function addPartToRepair(
             quantity: input.quantity,
             unitPrice: part.price,
         });
+
+        return repairRepository.findRepairOrderById(tx, repairId);
+    });
+}
+
+const ALLOWED_TRANSITIONS: Record<RepairStatus, RepairStatus[]> = {
+    received: ["diagnosing", "cancelled"],
+    diagnosing: ["in_repair", "cancelled"],
+    in_repair: ["ready", "cancelled"],
+    ready: ["issued"],
+    issued: [],
+    cancelled: [],
+};
+
+export interface ChangeRepairStatusInput {
+    status: RepairStatus;
+    version: number;
+    technicianId?: number;
+    laborCost?: number;
+}
+
+export async function changeRepairStatus(repairId: number, input: ChangeRepairStatusInput) {
+    return prisma.$transaction(async (tx) => {
+        const order = await repairRepository.findRepairOrderState(tx, repairId);
+        if (!order) {
+            throw new NotFoundError(`Repair order ${repairId} not found`);
+        }
+
+        if (!ALLOWED_TRANSITIONS[order.status].includes(input.status)) {
+            throw new ConflictError(
+                `Cannot change status from "${order.status}" to "${input.status}"`,
+            );
+        }
+
+        if (input.technicianId !== undefined) {
+            const technician = await repairRepository.findActiveTechnician(tx, input.technicianId);
+            if (!technician) {
+                throw new NotFoundError(`Active technician ${input.technicianId} not found`);
+            }
+        }
+
+        const technicianId = input.technicianId ?? order.technicianId;
+        if (input.status === "diagnosing" && technicianId === null) {
+            throw new ConflictError("Assign a technician before starting diagnosis");
+        }
+
+        const data: Prisma.RepairOrderUncheckedUpdateManyInput = { status: input.status };
+        if (input.technicianId !== undefined) {
+            data.technicianId = input.technicianId;
+        }
+        if (input.laborCost !== undefined) {
+            data.laborCost = input.laborCost;
+        }
+        if (input.status === "ready") {
+            data.completedAt = new Date();
+        }
+
+        const updated = await repairRepository.updateRepairOrderStatus(
+            tx,
+            repairId,
+            { version: input.version, status: order.status },
+            data,
+        );
+        if (updated.count === 0) {
+            throw new ConflictError(
+                "Repair order was changed by someone else; reload it and retry with the current version",
+            );
+        }
+
+        if (input.status === "cancelled") {
+            const parts = await repairRepository.findRepairOrderParts(tx, repairId);
+            for (const item of parts) {
+                await repairRepository.returnPartToStock(tx, item.partId, item.quantity);
+            }
+        }
 
         return repairRepository.findRepairOrderById(tx, repairId);
     });
