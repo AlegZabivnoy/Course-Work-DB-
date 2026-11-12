@@ -131,3 +131,15 @@ PATCH http://localhost:3000/repairs/2/status
 Content-Type: application/json
 
 { "status": "cancelled", "version": 0 }
+
+### 20. Видалити активний ремонт → 409
+DELETE http://localhost:3000/repairs/3
+
+### 21. Видалити виданий ремонт → 409
+DELETE http://localhost:3000/repairs/1
+
+### 22. Видалити скасований ремонт → 204 (позиції запчастин видаляються каскадно)
+DELETE http://localhost:3000/repairs/2
+
+### 23. Повторне видалення → 404
+DELETE http://localhost:3000/repairs/2

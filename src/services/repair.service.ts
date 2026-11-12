@@ -168,3 +168,20 @@ export async function changeRepairStatus(repairId: number, input: ChangeRepairSt
         return repairRepository.findRepairOrderById(tx, repairId);
     });
 }
+
+export async function deleteCancelledRepair(repairId: number) {
+    return prisma.$transaction(async (tx) => {
+        const result = await repairRepository.deleteCancelledRepairOrder(tx, repairId);
+        if (result.count === 1) {
+            return;
+        }
+
+        const order = await repairRepository.findRepairOrderState(tx, repairId);
+        if (!order) {
+            throw new NotFoundError(`Repair order ${repairId} not found`);
+        }
+        throw new ConflictError(
+            `Only cancelled repairs can be deleted; current status is "${order.status}"`,
+        );
+    });
+}

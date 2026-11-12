@@ -138,3 +138,9 @@ export function returnPartToStock(db: Db, partId: number, quantity: number) {
         },
     });
 }
+
+export function deleteCancelledRepairOrder(db: Db, id: number) {
+    return db.repairOrder.deleteMany({
+        where: { id, status: "cancelled" },
+    });
+}

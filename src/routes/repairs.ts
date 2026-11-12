@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { acceptRepair, addPartToRepair, changeRepairStatus } from "../services/repair.service";
+import { acceptRepair, addPartToRepair, changeRepairStatus, deleteCancelledRepair, } from "../services/repair.service";
 
 const phoneSchema = z
     .string()
@@ -53,5 +53,11 @@ export async function repairRoutes(app: FastifyInstance) {
         const { id } = repairIdSchema.parse(request.params);
         const body = changeStatusSchema.parse(request.body);
         return changeRepairStatus(id, body);
+    });
+
+    app.delete("/repairs/:id", async (request, reply) => {
+        const { id } = repairIdSchema.parse(request.params);
+        await deleteCancelledRepair(id);
+        return reply.code(204).send();
     });
 }
