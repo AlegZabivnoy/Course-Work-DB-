@@ -11,7 +11,8 @@
     "db:migrate": "prisma migrate deploy --config prisma7.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:demo": "tsx prisma/demo.ts"
   },
   "repository": {
     "type": "git",
