@@ -5,3 +5,12 @@ GET {{baseUrl}}/analytics/top-parts
 
 ### Monthly sales and change from previous month
 GET {{baseUrl}}/analytics/monthly-sales
+
+### Model reliability: repairs count, average repair time, rank inside brand
+GET {{baseUrl}}/analytics/model-reliability
+
+### Same, only models with at least 3 repairs
+GET {{baseUrl}}/analytics/model-reliability?minRepairs=3
+
+### Invalid threshold (400)
+GET {{baseUrl}}/analytics/model-reliability?minRepairs=0
