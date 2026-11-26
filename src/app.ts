@@ -41,7 +41,7 @@ function isCheckConstraintError(error: unknown): boolean {
 }
 
 export function buildApp() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: !process.env.VITEST });
 
   app.setErrorHandler((error, request, reply) => {
     const fastifyError = error as Error & { statusCode?: number };
