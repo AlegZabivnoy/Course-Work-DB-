@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { acceptRepair, addPartToRepair, changeRepairStatus, deleteCancelledRepair, } from "../services/repair.service";
+import { acceptRepair, addPartToRepair, changeRepairStatus, deleteCancelledRepair, listCustomerDevices, listRepairs } from "../services/repair.service";
 
 const phoneSchema = z
     .string()
@@ -36,6 +36,16 @@ const changeStatusSchema = z.object({
     laborCost: z.number().nonnegative().max(100000).optional(),
 });
 
+const listRepairsSchema = z.object({
+    status: z.enum(["received", "diagnosing", "in_repair", "ready", "issued", "cancelled"]).optional(),
+    page: z.coerce.number().int().positive().default(1),
+    pageSize: z.coerce.number().int().positive().max(100).default(20),
+});
+
+const customerIdSchema = z.object({
+    id: z.coerce.number().int().positive(),
+});
+
 export async function repairRoutes(app: FastifyInstance) {
     app.post("/repairs", async (request, reply) => {
         const parsed = acceptRepairSchema.parse(request.body);
@@ -59,5 +69,15 @@ export async function repairRoutes(app: FastifyInstance) {
         const { id } = repairIdSchema.parse(request.params);
         await deleteCancelledRepair(id);
         return reply.code(204).send();
+    });
+
+    app.get("/repairs", async (request) => {
+        const query = listRepairsSchema.parse(request.query);
+        return listRepairs(query);
+    });
+
+    app.get("/customers/:id/devices", async (request) => {
+        const { id } = customerIdSchema.parse(request.params);
+        return listCustomerDevices(id);
     });
 }

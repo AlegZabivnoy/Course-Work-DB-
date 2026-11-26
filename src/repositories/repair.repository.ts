@@ -144,3 +144,40 @@ export function deleteCancelledRepairOrder(db: Db, id: number) {
         where: { id, status: "cancelled" },
     });
 }
+
+export function findRepairOrders(
+    db: Db,
+    filter: { status?: RepairStatus; skip: number; take: number },
+) {
+    return db.repairOrder.findMany({
+        where: filter.status ? { status: filter.status } : {},
+        orderBy: { createdAt: "desc" },
+        skip: filter.skip,
+        take: filter.take,
+        include: {
+            device: { include: { model: { include: { brand: true } } } },
+            technician: true,
+        },
+    });
+}
+
+export function countRepairOrders(db: Db, status?: RepairStatus) {
+    return db.repairOrder.count({
+        where: status ? { status } : {},
+    });
+}
+
+export function findActiveCustomerById(db: Db, id: number) {
+    return db.customer.findFirst({ where: { id, deletedAt: null } });
+}
+
+export function findCustomerDevices(db: Db, customerId: number) {
+    return db.device.findMany({
+        where: { customerId },
+        orderBy: { model: { releaseYear: "desc" } },
+        include: {
+            model: { include: { brand: true } },
+            _count: { select: { repairOrders: true } },
+        },
+    });
+}

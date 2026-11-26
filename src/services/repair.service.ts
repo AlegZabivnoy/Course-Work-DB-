@@ -185,3 +185,34 @@ export async function deleteCancelledRepair(repairId: number) {
         );
     });
 }
+
+export async function listRepairs(input: {
+    status?: RepairStatus;
+    page: number;
+    pageSize: number;
+}) {
+    const [items, total] = await Promise.all([
+        repairRepository.findRepairOrders(prisma, {
+            status: input.status,
+            skip: (input.page - 1) * input.pageSize,
+            take: input.pageSize,
+        }),
+        repairRepository.countRepairOrders(prisma, input.status),
+    ]);
+
+    return {
+        items,
+        page: input.page,
+        pageSize: input.pageSize,
+        total,
+        totalPages: Math.ceil(total / input.pageSize),
+    };
+}
+
+export async function listCustomerDevices(customerId: number) {
+    const customer = await repairRepository.findActiveCustomerById(prisma, customerId);
+    if (!customer) {
+        throw new NotFoundError(`Active customer ${customerId} not found`);
+    }
+    return repairRepository.findCustomerDevices(prisma, customerId);
+}

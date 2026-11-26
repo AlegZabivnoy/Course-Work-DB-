@@ -143,3 +143,21 @@ DELETE http://localhost:3000/repairs/2
 
 ### 23. Повторне видалення → 404
 DELETE http://localhost:3000/repairs/2
+
+### 24. Усі ремонти, перша сторінка → 200
+GET http://localhost:3000/repairs
+
+### 25. Тільки видані ремонти → 200
+GET http://localhost:3000/repairs?status=issued
+
+### 26. Пагінація: по 1 ремонту на сторінку, друга сторінка → 200
+GET http://localhost:3000/repairs?page=2&pageSize=1
+
+### 27. Невідомий статус → 400
+GET http://localhost:3000/repairs?status=broken
+
+### 28. Пристрої клієнта 1 → 200
+GET http://localhost:3000/customers/1/devices
+
+### 29. Неіснуючий клієнт → 404
+GET http://localhost:3000/customers/999/devices
